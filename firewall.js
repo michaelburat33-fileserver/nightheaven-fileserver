@@ -6,8 +6,8 @@
 (function(global){
   'use strict';
 
-  // 1. Blockliste (HTTP/Netzwerk + alle relevanten Features)
-  const blockedKeywords = Object.freeze([
+  // 1. Blockliste (nicht mehr frozen, kann erweitert werden)
+  let blockedKeywords = [
     "Ambient Light Events",
     "Application Cache",
     "HTML5 Audio Element",
@@ -279,7 +279,7 @@
     "Shared Workers",
     "Transferables Objects",
     "Web Workers"
-  ]);
+  ];
 
   // 2. Prüffunktion
   function checkBlocked(inputString) {
@@ -294,14 +294,23 @@
     return blocked;
   }
 
-  // 3. Namespace exportieren
-  global.LuftDicht = Object.freeze({
+  // 3. Möglichkeit zum dynamischen Hinzufügen
+  function addKeyword(keyword) {
+    if(keyword && !blockedKeywords.includes(keyword)) {
+      blockedKeywords.push(keyword);
+    }
+  }
+
+  // 4. Namespace exportieren
+  global.LuftDicht = {
     blockedKeywords: blockedKeywords,
-    checkBlocked: checkBlocked
-  });
+    checkBlocked: checkBlocked,
+    addKeyword: addKeyword
+  };
 
 })(typeof window !== 'undefined' ? window : this);
 
-/* Verwendung in der Konsole:
-LuftDicht.checkBlocked("Hier ist ein Test mit Fetch API und Cookies");
+/* Verwendung:
+LuftDicht.checkBlocked("Test mit Fetch API");
+LuftDicht.addKeyword("Meine neue API");
 */
