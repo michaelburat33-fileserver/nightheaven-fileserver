@@ -14,7 +14,7 @@
 const firewallConfig = {
     allowedIPs: ['192.168.0.1', '10.0.0.0/24'],
     blockedIPs: ['123.123.123.123'],
-    allowedProtocols: ['HTTP', 'HTTPS', 'SSH'],
+    allowedProtocols: ['HTTP'],
     maxConnectionsPerIP: 100
 };
 
