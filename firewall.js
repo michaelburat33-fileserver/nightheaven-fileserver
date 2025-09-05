@@ -1,37 +1,29 @@
-/**
- * firewall.js
- * 
- * Professionelle Firewall-Simulation für NIS2 & ISO27001 Compliance
- * Reines JavaScript (kein Node.js)
- * 
- * Features:
- * - Whitelist / Blacklist
- * - Protokollprüfung
- * - Verbindungslimits
- * - Audit-Logging in-memory
- */
-
+// ===========================
+// Firewall-Konfiguration
+// ===========================
 const firewallConfig = {
     allowedIPs: ['192.168.0.1', '10.0.0.0/24'],
     blockedIPs: ['123.123.123.123'],
-    allowedProtocols: ['HTTP'],
-    maxConnectionsPerIP: 100
+    allowedProtocols: ['HTTP'], // Nur HTTP erlaubt
+    maxConnectionsPerIP: 100,
+    leakKeywords: ["Canvas text","fetch API","WebGL","Local Storage","Cookies","Battery API","Web Audio API"],
+    malwarePatterns: ["eval(", "atob(", "document.write(", "unescape(", "setTimeout(", "setInterval("],
+    botPatterns: ["curl", "wget", "bot", "spider", "crawler", "python-requests"]
 };
 
-// In-Memory Audit-Log
+// Audit-Log & Connection Tracker
 let auditLog = [];
-
-// Verbindungs-Tracking
 let connectionTracker = {};
 
 // ===========================
 // Hilfsfunktionen
 // ===========================
-
 function logEvent(event) {
     const timestamp = new Date().toISOString();
-    auditLog.push(`[${timestamp}] ${event}`);
-    console.log(`[${timestamp}] ${event}`);
+    const msg = `[${timestamp}] ${event}`;
+    auditLog.push(msg);
+    console.log(msg);
+    document.getElementById('logContainer').innerText = auditLog.join("\n");
 }
 
 function ipToInt(ip) {
@@ -53,35 +45,57 @@ function isIPAllowed(ip) {
     });
 }
 
-// ===========================
-// Firewall Kernlogik
-// ===========================
+function containsLeakKeyword(str) {
+    return firewallConfig.leakKeywords.some(keyword => str.includes(keyword));
+}
 
+function containsMalwarePattern(str) {
+    return firewallConfig.malwarePatterns.some(pattern => str.includes(pattern));
+}
+
+function containsBotPattern(str) {
+    return firewallConfig.botPatterns.some(pattern => str.toLowerCase().includes(str.toLowerCase()));
+}
+
+// ===========================
+// Firewall-Kernlogik
+// ===========================
 function handleConnection(connection) {
-    const { ip, protocol } = connection;
+    const { ip, protocol, payload } = connection;
 
-    // Blockierte IPs
     if (firewallConfig.blockedIPs.includes(ip)) {
         logEvent(`BLOCKED IP ${ip} versuchte Verbindung mit ${protocol}`);
         return false;
     }
 
-    // Protokollprüfung
     if (!firewallConfig.allowedProtocols.includes(protocol)) {
-        logEvent(`UNAUTHORIZED PROTOCOL ${protocol} von ${ip}`);
+        logEvent(`BLOCKED PROTOCOL ${protocol} von ${ip} – nur HTTP erlaubt`);
         return false;
     }
 
-    // Max. Connections pro IP
     connectionTracker[ip] = (connectionTracker[ip] || 0) + 1;
     if (connectionTracker[ip] > firewallConfig.maxConnectionsPerIP) {
         logEvent(`DoS VERDACHT: ${ip} überschreitet maximale Verbindungen`);
         return false;
     }
 
-    // Whitelist-Prüfung
     if (!isIPAllowed(ip)) {
         logEvent(`UNAUTHORIZED IP ${ip} versucht Zugriff`);
+        return false;
+    }
+
+    if (payload && containsLeakKeyword(payload)) {
+        logEvent(`LEAK KEYWORD DETECTED von ${ip}: ${payload}`);
+        return false;
+    }
+
+    if (payload && containsMalwarePattern(payload)) {
+        logEvent(`MALWARE PATTERN DETECTED von ${ip}: ${payload}`);
+        return false;
+    }
+
+    if (payload && containsBotPattern(payload)) {
+        logEvent(`BOT DETECTED von ${ip}: ${payload}`);
         return false;
     }
 
@@ -92,7 +106,6 @@ function handleConnection(connection) {
 // ===========================
 // Audit-Report
 // ===========================
-
 function generateAuditReport() {
     logEvent("=== AUDIT REPORT START ===");
     logEvent(JSON.stringify({ connections: { ...connectionTracker } }, null, 2));
@@ -100,15 +113,20 @@ function generateAuditReport() {
 }
 
 // ===========================
-// Demo
+// Demo-Verbindungen
 // ===========================
+function runDemo() {
+    const demoConnections = [
+        { ip: '192.168.0.1', protocol: 'HTTP', payload: "normal HTTP traffic" },
+        { ip: '10.0.0.5', protocol: 'HTTPS', payload: "HTTPS traffic" },
+        { ip: '192.168.0.2', protocol: 'FTP', payload: "FTP traffic" },
+        { ip: '123.123.123.123', protocol: 'HTTP', payload: "malware eval(document.cookie)" },
+        { ip: '192.168.0.3', protocol: 'HTTP', payload: "Canvas text" } // Leak keyword
+    ];
 
-const demoConnections = [
-    { ip: '192.168.0.1', protocol: 'HTTP' },
-    { ip: '123.123.123.123', protocol: 'SSH' },
-    { ip: '10.0.0.5', protocol: 'HTTPS' },
-    { ip: '8.8.8.8', protocol: 'FTP' }
-];
+    demoConnections.forEach(handleConnection);
+    generateAuditReport();
+}
 
-demoConnections.forEach(handleConnection);
-generateAuditReport();
+// Demo automatisch beim Laden der Seite starten
+window.onload = runDemo;
