@@ -2,7 +2,7 @@
 // Firewall-Konfiguration
 // ===========================
 const firewallConfig = {
-    allowedIPs: ['192.168.0.1', '10.0.0.0/24'],
+    allowedIPs: ['127.0.0.1', '10.0.0.0/24'],
     blockedIPs: ['123.123.123.123'],
     allowedProtocols: ['HTTP'], // Nur HTTP erlaubt
     maxConnectionsPerIP: 100,
