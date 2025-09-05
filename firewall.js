@@ -1,161 +1,114 @@
 /**
- * blockKeywords.js
- * 100% luftdicht, ISO27001 + NIS2-konform
- * Prüft Inhalte auf alle blockierten Keywords
+ * firewall.js
+ * 
+ * Professionelle Firewall-Simulation für NIS2 & ISO27001 Compliance
+ * Reines JavaScript (kein Node.js)
+ * 
+ * Features:
+ * - Whitelist / Blacklist
+ * - Protokollprüfung
+ * - Verbindungslimits
+ * - Audit-Logging in-memory
  */
-(function(global){
-  'use strict';
 
-  // --------------------
-  // 1. Vollständige Blockliste (alle Keywords aus deiner Liste)
-  const blockedKeywords = Object.freeze([
-    "Ambient Light Events","Application Cache","HTML5 Audio Element","Battery API",
-    "Blob constructor","Canvas","Canvas text","Content Editable","Context menus",
-    "Cookies","Cross-Origin Resource Sharing","Web Cryptography","Custom Elements API",
-    "Custom protocol handler","CustomEvent","Dart","DataView","Emoji","Event Listener",
-    "EXIF Orientation","Flash","Force Touch Events","Fullscreen API","GamePad API",
-    "Geolocation API","Hashchange event","Hidden Scrollbar","History API","HTML Imports",
-    "IE8 compat mode","IndexedDB","IndexedDB Blob","Input attributes","input[search] search event",
-    "Form input types","Internationalization API","JSON","Font Ligatures","Reverse Ordered Lists",
-    "MathML","Message Channel","Notification","Page Visibility API","Navigation Timing API",
-    "DOM Pointer Events API","Pointer Lock API","postMessage","Proximity API","QuerySelector",
-    "Quota Storage Management API","requestAnimationFrame","ServiceWorker API","SVG","Template strings",
-    "Touch Events","Typed arrays","Unicode Range","Unicode characters","IE User Data API",
-    "Vibration API","HTML5 Video","VML","Web Intents","Web Animation API","WebGL","WebSockets Support",
-    "XDomainRequest","a[download] Attribute","Audio Loop Attribute","Audio Preload","Web Audio API",
-    "Low Battery Level","canvas blending support","canvas.toDataURL type support","canvas winding support",
-    "getRandomValues","cssall","CSS Animations","Appearance","Backdrop Filter","CSS Background Blend Mode",
-    "CSS Background Clip Text","Background Position Shorthand","Background Position XY","Background Repeat",
-    "Background Size","Background Size Cover","Border Image","Border Radius","Box Shadow","Box Sizing",
-    "CSS Calc","CSS :checked pseudo-selector","CSS Font ch Units","CSS Columns","CSS Grid (old & new)",
-    "CSS Cubic Bezier Range","CSS Display run-in","CSS Display table","CSS text-overflow ellipsis",
-    "CSS.escape()","CSS Font ex Units","CSS Filters","Flexbox","Flexbox (legacy)","Flexbox (tweener)",
-    "Flex Line Wrapping","CSS :focus-within pseudo-selector","@font-face","CSS Generated Content","CSS Gradients",
-    "CSS Hairline","CSS HSLA Colors","CSS Hyphens","CSS :invalid pseudo-class","CSS :last-child pseudo-selector",
-    "CSS Mask","CSS Media Queries","CSS Multiple Backgrounds","CSS :nth-child pseudo-selector","CSS Object Fit",
-    "CSS Opacity","CSS Overflow Scrolling","CSS Pointer Events","CSS position: sticky","CSS Generated Content Animations",
-    "CSS Generated Content Transitions","CSS Reflections","CSS Regions","CSS Font rem Units","CSS UI Resize",
-    "CSS rgba","CSS Stylable Scrollbars","Scroll Snap Points","CSS Shapes","CSS general sibling selector",
-    "CSS Subpixel Fonts","CSS Supports","CSS :target pseudo-class","CSS text-align-last","CSS textshadow",
-    "CSS Transforms","CSS Transforms 3D","CSS Transforms Level 2","CSS Transform Style preserve-3d",
-    "CSS Transitions","CSS user-select","CSS :valid pseudo-class","Variable Open Type Fonts","CSS vh unit",
-    "CSS vmax unit","CSS vmin unit","CSS vw unit","will-change","CSS wrap-flow","classList","createElement with Attributes",
-    "dataset API","Document Fragment","[hidden] Attribute","microdata","DOM4 MutationObserver","Passive event listeners",
-    "bdi Element","datalist Element","details Element","output Element","picture Element","progress Element",
-    "ruby, rp, rt Elements","Template Tag","time Element","Track element and Timed Text Track","Unknown Elements",
-    "ES5 Array","ES5 Date","ES5 Function","ES5 Object","ES5","ES5 Strict Mode","ES5 String","ES5 Syntax",
-    "ES5 Immutable Undefined","ES6 Array","ES6 Arrow Functions","ES6 Collections","ES5 String.prototype.contains",
-    "ES6 Generators","ES6 Math","ES6 Number","ES6 Object","ES6 Promises","ES6 String","Orientation and Motion Events",
-    "onInput Event","File API","Filesystem API","input[capture] Attribute","input[file] Attribute",
-    "input[directory] Attribute","input[form] Attribute","input[type=\"number\"] Localization","placeholder attribute",
-    "form#requestAutocomplete()","Form Validation","iframe[sandbox] Attribute","iframe[seamless] Attribute",
-    "iframe[srcdoc] Attribute","Animated PNG","Image crossOrigin","JPEG 2000","JPEG XR (extended range)","sizes attribute",
-    "srcset attribute","Webp Alpha","Webp Animation","Webp Lossless","Webp","input formaction","input formenctype",
-    "input formmethod","input formtarget","Hover Media Query","Pointer Media Query","Beacon API","Low Bandwidth Connection",
-    "Server Sent Events","Fetch API","XHR responseType='arraybuffer'","XHR responseType='blob'","XHR responseType='document'",
-    "XHR responseType='json'","XHR responseType='text'","XHR responseType","XML HTTP Request Level 2 XHR2","script[async]",
-    "script[defer]","Speech Recognition API","Speech Synthesis API","Local Storage","Session Storage","Web SQL Database",
-    "style[scoped]","SVG as an <img> tag source","SVG clip paths","SVG filters","SVG foreignObject","Inline SVG",
-    "SVG SMIL animation","textarea maxlength","Blob URLs","Data URI","URL parser","URLSearchParams API","Video Autoplay",
-    "Video crossOrigin","Video Loop Attribute","Video Preload Attribute","WebGL Extensions","RTC Data Channel",
-    "getUserMedia","RTC Peer Connection","Binary WebSockets","Base 64 encoding/decoding","Framed window","matchMedia",
-    "Workers from Blob URIs","Workers from Data URIs","Shared Workers","Transferables Objects","Web Workers"
-  ]);
+const firewallConfig = {
+    allowedIPs: ['192.168.0.1', '10.0.0.0/24'],
+    blockedIPs: ['123.123.123.123'],
+    allowedProtocols: ['HTTP', 'HTTPS', 'SSH'],
+    maxConnectionsPerIP: 100
+};
 
-  // --------------------
-  // 2. Prüffunktion
-  function checkBlocked(inputString) {
-    const lowerInput = inputString.toLowerCase();
-    const blocked = blockedKeywords.filter(k => lowerInput.includes(k.toLowerCase()));
-    if(blocked.length > 0){
-      console.warn("%cBLOCKED KEYWORDS DETECTED:", "color: red; font-weight: bold;");
-      blocked.forEach(k => console.log("%c" + k, "color: red;"));
-    } 
-    return blocked;
-  }
+// In-Memory Audit-Log
+let auditLog = [];
 
-  // --------------------
-  // 3. Dynamische Keyword-Erweiterung
-  function addKeyword(keyword) {
-    if(keyword && !blockedKeywords.includes(keyword)) {
-      blockedKeywords.push(keyword);
+// Verbindungs-Tracking
+let connectionTracker = {};
+
+// ===========================
+// Hilfsfunktionen
+// ===========================
+
+function logEvent(event) {
+    const timestamp = new Date().toISOString();
+    auditLog.push(`[${timestamp}] ${event}`);
+    console.log(`[${timestamp}] ${event}`);
+}
+
+function ipToInt(ip) {
+    return ip.split('.').reduce((acc, octet) => (acc << 8) + parseInt(octet), 0);
+}
+
+function ipInCIDR(ip, cidr) {
+    const [range, bits] = cidr.split('/');
+    const ipNum = ipToInt(ip);
+    const rangeNum = ipToInt(range);
+    const mask = -1 << (32 - parseInt(bits));
+    return (ipNum & mask) === (rangeNum & mask);
+}
+
+function isIPAllowed(ip) {
+    return firewallConfig.allowedIPs.some(allowed => {
+        if (allowed.includes('/')) return ipInCIDR(ip, allowed);
+        return ip === allowed;
+    });
+}
+
+// ===========================
+// Firewall Kernlogik
+// ===========================
+
+function handleConnection(connection) {
+    const { ip, protocol } = connection;
+
+    // Blockierte IPs
+    if (firewallConfig.blockedIPs.includes(ip)) {
+        logEvent(`BLOCKED IP ${ip} versuchte Verbindung mit ${protocol}`);
+        return false;
     }
-  }
 
-  // --------------------
-  // 4. Echtzeit DOM Überwachung
-  const observer = new MutationObserver(mutations => {
-    for(let mutation of mutations) {
-      if(mutation.type === 'childList' && mutation.addedNodes.length > 0) {
-        mutation.addedNodes.forEach(node => {
-          if(node.nodeType === Node.TEXT_NODE || node.nodeType === Node.ELEMENT_NODE) {
-            const text = node.textContent || "";
-            const blocked = checkBlocked(text);
-            if(blocked.length > 0) {
-              console.error("🚨 BLOCKED CONTENT DETECTED IN DOM:", node);
-              node.remove();
-            }
-          }
-        });
-      }
-      if(mutation.type === 'attributes' && mutation.attributeName === 'src') {
-        const node = mutation.target;
-        if(node.tagName === "SCRIPT") {
-          const src = node.getAttribute('src') || "";
-          const blocked = checkBlocked(src);
-          if(blocked.length > 0) {
-            console.error("🚨 BLOCKED SCRIPT DETECTED:", src);
-            node.remove();
-          }
-        }
-      }
+    // Protokollprüfung
+    if (!firewallConfig.allowedProtocols.includes(protocol)) {
+        logEvent(`UNAUTHORIZED PROTOCOL ${protocol} von ${ip}`);
+        return false;
     }
-  });
 
-  observer.observe(document.documentElement, {
-    childList: true,
-    subtree: true,
-    attributes: true,
-    characterData: true,
-    attributeFilter: ['src']
-  });
-
-  // --------------------
-  // 5. Fetch / XHR Überwachung
-  const originalFetch = window.fetch;
-  window.fetch = function(...args){
-    if(args[0]){
-      const urlStr = (typeof args[0]==='string')? args[0] : (args[0].url||'');
-      if(checkBlocked(urlStr).length > 0){
-        console.error("🚨 BLOCKED FETCH DETECTED:", urlStr);
-        return Promise.reject(new Error("Blocked by LuftDicht"));
-      }
+    // Max. Connections pro IP
+    connectionTracker[ip] = (connectionTracker[ip] || 0) + 1;
+    if (connectionTracker[ip] > firewallConfig.maxConnectionsPerIP) {
+        logEvent(`DoS VERDACHT: ${ip} überschreitet maximale Verbindungen`);
+        return false;
     }
-    return originalFetch.apply(this, args);
-  };
 
-  const originalXHROpen = XMLHttpRequest.prototype.open;
-  XMLHttpRequest.prototype.open = function(method, url, ...rest){
-    if(checkBlocked(url).length > 0){
-      console.error("🚨 BLOCKED XHR DETECTED:", url);
-      return;
+    // Whitelist-Prüfung
+    if (!isIPAllowed(ip)) {
+        logEvent(`UNAUTHORIZED IP ${ip} versucht Zugriff`);
+        return false;
     }
-    return originalXHROpen.call(this, method, url, ...rest);
-  };
 
-  // --------------------
-  // 6. Export
-  global.LuftDicht = {
-    blockedKeywords: blockedKeywords,
-    checkBlocked: checkBlocked,
-    addKeyword: addKeyword,
-    observer: observer
-  };
+    logEvent(`ALLOWED ${ip} mit ${protocol}`);
+    return true;
+}
 
-})(typeof window !== 'undefined' ? window : this);
+// ===========================
+// Audit-Report
+// ===========================
 
-/*
-Verwendung:
-LuftDicht.checkBlocked("Test mit Fetch API und Cookies");
-LuftDicht.addKeyword("Neue API");
-*/
+function generateAuditReport() {
+    logEvent("=== AUDIT REPORT START ===");
+    logEvent(JSON.stringify({ connections: { ...connectionTracker } }, null, 2));
+    logEvent("=== AUDIT REPORT END ===");
+}
+
+// ===========================
+// Demo
+// ===========================
+
+const demoConnections = [
+    { ip: '192.168.0.1', protocol: 'HTTP' },
+    { ip: '123.123.123.123', protocol: 'SSH' },
+    { ip: '10.0.0.5', protocol: 'HTTPS' },
+    { ip: '8.8.8.8', protocol: 'FTP' }
+];
+
+demoConnections.forEach(handleConnection);
+generateAuditReport();
