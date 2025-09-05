@@ -1,65 +1,117 @@
-const AES_KEY = "12345678901234567890123456789012"; // 32 Zeichen
+const API_KEY = "DEIN_SECRET_API_KEY";
 
-async function decryptAES(encryptedBase64, ivBase64, keyString) {
-    const enc = new TextEncoder();
-    const keyBuffer = enc.encode(keyString);
-
-    const cryptoKey = await crypto.subtle.importKey(
-        "raw",
-        keyBuffer,
-        { name: "AES-CBC" },
-        false,
-        ["decrypt"]
-    );
-
-    const iv = Uint8Array.from(atob(ivBase64), c => c.charCodeAt(0));
-    const data = Uint8Array.from(atob(encryptedBase64), c => c.charCodeAt(0));
-
-    const decryptedBuffer = await crypto.subtle.decrypt(
-        { name: "AES-CBC", iv },
-        cryptoKey,
-        data
-    );
-
-    const decoded = new TextDecoder().decode(decryptedBuffer);
-    return JSON.parse(decoded);
-}
-
-async function fetchData() {
-    try {
-        const response = await fetch('./api.php', {
-            headers: {
-                'apikey': 'DEIN_API_KEY_HIER'
-            }
+    async function loadData() {
+      try {
+        const response = await fetch('/api/v1/data', {
+          method: 'GET',
+          headers: {
+            'X-API-KEY': API_KEY,
+            'Accept': 'application/json'
+          }
         });
-        if (!response.ok) throw new Error("Fehler beim Abruf der API");
 
-        const json = await response.json();
-        const decrypted = await decryptAES(json.data, json.iv, AES_KEY);
+        if (!response.ok) throw new Error(`Fehler beim Laden der Daten: ${response.status}`);
+        const data = await response.json();
+        renderPage(data);
 
-        console.log("Decrypted API Data:", decrypted);
-
-        // --- Logo setzen ---
-        const logoEl = document.getElementById('logo');
-        if (logoEl && decrypted.logo) {
-            logoEl.innerHTML = `<img src="${decrypted.logo}" alt="Logo" style="max-width:100%;height:auto;">`;
-        }
-
-        // --- News anzeigen ---
-        const newsEl = document.getElementById('news');
-        if (newsEl && decrypted.news) {
-            newsEl.innerHTML = decrypted.news.map(n => `
-                <div class="news-item">
-                    <h2>${n.name || ''}</h2>
-                    <small>${n.date || ''}</small>
-                    <p>${n.content || ''}</p>
-                </div>
-            `).join('');
-        }
-
-    } catch (err) {
-        console.error("API-Fehler:", err);
+      } catch (err) {
+        console.error(err);
+        document.getElementById('root').innerHTML = '<p>Fehler beim Laden der Seite.</p>';
+      }
     }
-}
 
-fetchData();
+    function renderPage(data) {
+      const root = document.getElementById('root');
+      root.innerHTML = '';
+
+      // Header mit Logo & Navigation
+      const header = document.createElement('header');
+
+      const logo = document.createElement('img');
+      logo.id = 'logo';
+      logo.src = data.logo || '';
+      logo.alt = 'Logo';
+      header.appendChild(logo);
+
+      const nav = document.createElement('nav');
+      if (data.navigation) {
+        data.navigation.forEach(item => {
+          const a = document.createElement('a');
+          a.href = item.href;
+          a.textContent = item.name;
+          nav.appendChild(a);
+        });
+      }
+      header.appendChild(nav);
+      root.appendChild(header);
+
+      // News Section
+      const newsSection = document.createElement('section');
+      newsSection.id = 'news';
+      const newsTitle = document.createElement('h2');
+      newsTitle.textContent = 'Neuigkeiten';
+      newsSection.appendChild(newsTitle);
+
+      if (data.news) {
+        data.news.forEach(n => {
+          const div = document.createElement('div');
+          div.className = 'news-item';
+          div.innerHTML = `<h3>${n.name}</h3><small>${n.date || ''}</small><p>${n.content || ''}</p>`;
+          newsSection.appendChild(div);
+        });
+      }
+      root.appendChild(newsSection);
+
+      // Mitglieder Section
+      const membersSection = document.createElement('section');
+      membersSection.id = 'members';
+      const membersTitle = document.createElement('h2');
+      membersTitle.textContent = 'Mitglieder';
+      membersSection.appendChild(membersTitle);
+
+      if (data.members) {
+        data.members.forEach(m => {
+          const div = document.createElement('div');
+          div.className = 'member';
+          div.innerHTML = `<img src="${m.src}" alt="${m.name}" /><h4>${m.name}</h4><p>${m.rolle}</p>`;
+          membersSection.appendChild(div);
+        });
+      }
+      root.appendChild(membersSection);
+
+      // Social Section
+      const socialSection = document.createElement('section');
+      socialSection.id = 'social';
+      const socialTitle = document.createElement('h2');
+      socialTitle.textContent = 'Social';
+      socialSection.appendChild(socialTitle);
+
+      if (data.social) {
+        data.social.forEach(s => {
+          const a = document.createElement('a');
+          a.href = s.href;
+          a.target = '_blank';
+          const img = document.createElement('img');
+          img.src = s.icon;
+          img.alt = s.name;
+          img.width = 24;
+          img.height = 24;
+          a.appendChild(img);
+          socialSection.appendChild(a);
+        });
+      }
+      root.appendChild(socialSection);
+
+      // Favicon setzen
+      if (data.favicon) {
+        let link = document.querySelector("link[rel~='icon']");
+        if (!link) {
+          link = document.createElement('link');
+          link.rel = 'icon';
+          document.head.appendChild(link);
+        }
+        link.href = data.favicon;
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', loadData);
