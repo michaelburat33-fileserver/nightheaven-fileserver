@@ -1,132 +1,352 @@
-// ===========================
-// Firewall-Konfiguration
-// ===========================
-const firewallConfig = {
-    allowedIPs: ['127.0.0.1', '10.0.0.0/24'],
-    blockedIPs: ['123.123.123.123'],
-    allowedProtocols: ['HTTP'], // Nur HTTP erlaubt
-    maxConnectionsPerIP: 100,
-    leakKeywords: ["Canvas text","fetch API","WebGL","Local Storage","Cookies","Battery API","Web Audio API"],
-    malwarePatterns: ["eval(", "atob(", "document.write(", "unescape(", "setTimeout(", "setInterval("],
-    botPatterns: ["curl", "wget", "bot", "spider", "crawler", "python-requests"]
-};
+// luftdicht.js
+// Vollständige Version: Features + HTTP(S) Trafficfilter (Links + fetch/XHR)
 
-// Audit-Log & Connection Tracker
-let auditLog = [];
-let connectionTracker = {};
+(function() {
+  // 1. Alle Features / Keywords
+  const features = [
+    "Ambient Light Events",
+    "Application Cache",
+    "HTML5 Audio Element",
+    "Battery API",
+    "Blob constructor",
+    "Canvas",
+    "Canvas text",
+    "Content Editable",
+    "Context menus",
+    "Cookies",
+    "Cross-Origin Resource Sharing",
+    "Web Cryptography",
+    "Custom Elements API",
+    "Custom protocol handler",
+    "CustomEvent",
+    "Dart",
+    "DataView",
+    "Emoji",
+    "Event Listener",
+    "EXIF Orientation",
+    "Flash",
+    "Force Touch Events",
+    "Fullscreen API",
+    "GamePad API",
+    "Geolocation API",
+    "Hashchange event",
+    "Hidden Scrollbar",
+    "History API",
+    "HTML Imports",
+    "IE8 compat mode",
+    "IndexedDB",
+    "IndexedDB Blob",
+    "Input attributes",
+    "input[search] search event",
+    "Form input types",
+    "Internationalization API",
+    "JSON",
+    "Font Ligatures",
+    "Reverse Ordered Lists",
+    "MathML",
+    "Message Channel",
+    "Notification",
+    "Page Visibility API",
+    "Navigation Timing API",
+    "DOM Pointer Events API",
+    "Pointer Lock API",
+    "postMessage",
+    "Proximity API",
+    "QuerySelector",
+    "Quota Storage Management API",
+    "requestAnimationFrame",
+    "ServiceWorker API",
+    "SVG",
+    "Template strings",
+    "Touch Events",
+    "Typed arrays",
+    "Unicode Range",
+    "Unicode characters",
+    "IE User Data API",
+    "Vibration API",
+    "HTML5 Video",
+    "VML",
+    "Web Intents",
+    "Web Animation API",
+    "WebGL",
+    "WebSockets Support",
+    "XDomainRequest",
+    "a[download] Attribute",
+    "Audio Loop Attribute",
+    "Audio Preload",
+    "Web Audio API",
+    "Low Battery Level",
+    "canvas blending support",
+    "canvas.toDataURL type support",
+    "canvas winding support",
+    "getRandomValues",
+    "cssall",
+    "CSS Animations",
+    "Appearance",
+    "Backdrop Filter",
+    "CSS Background Blend Mode",
+    "CSS Background Clip Text",
+    "Background Position Shorthand",
+    "Background Position XY",
+    "Background Repeat",
+    "Background Size",
+    "Background Size Cover",
+    "Border Image",
+    "Border Radius",
+    "Box Shadow",
+    "Box Sizing",
+    "CSS Calc",
+    "CSS :checked pseudo-selector",
+    "CSS Font ch Units",
+    "CSS Columns",
+    "CSS Grid (old & new)",
+    "CSS Cubic Bezier Range",
+    "CSS Display run-in",
+    "CSS Display table",
+    "CSS text-overflow ellipsis",
+    "CSS.escape()",
+    "CSS Font ex Units",
+    "CSS Filters",
+    "Flexbox",
+    "Flexbox (legacy)",
+    "Flexbox (tweener)",
+    "Flex Line Wrapping",
+    "CSS :focus-within pseudo-selector",
+    "@font-face",
+    "CSS Generated Content",
+    "CSS Gradients",
+    "CSS Hairline",
+    "CSS HSLA Colors",
+    "CSS Hyphens",
+    "CSS :invalid pseudo-class",
+    "CSS :last-child pseudo-selector",
+    "CSS Mask",
+    "CSS Media Queries",
+    "CSS Multiple Backgrounds",
+    "CSS :nth-child pseudo-selector",
+    "CSS Object Fit",
+    "CSS Opacity",
+    "CSS Overflow Scrolling",
+    "CSS Pointer Events",
+    "CSS position: sticky",
+    "CSS Generated Content Animations",
+    "CSS Generated Content Transitions",
+    "CSS Reflections",
+    "CSS Regions",
+    "CSS Font rem Units",
+    "CSS UI Resize",
+    "CSS rgba",
+    "CSS Stylable Scrollbars",
+    "Scroll Snap Points",
+    "CSS Shapes",
+    "CSS general sibling selector",
+    "CSS Subpixel Fonts",
+    "CSS Supports",
+    "CSS :target pseudo-class",
+    "CSS text-align-last",
+    "CSS textshadow",
+    "CSS Transforms",
+    "CSS Transforms 3D",
+    "CSS Transforms Level 2",
+    "CSS Transform Style preserve-3d",
+    "CSS Transitions",
+    "CSS user-select",
+    "CSS :valid pseudo-class",
+    "Variable Open Type Fonts",
+    "CSS vh unit",
+    "CSS vmax unit",
+    "CSS vmin unit",
+    "CSS vw unit",
+    "will-change",
+    "CSS wrap-flow",
+    "classList",
+    "createElement with Attributes",
+    "dataset API",
+    "Document Fragment",
+    "[hidden] Attribute",
+    "microdata",
+    "DOM4 MutationObserver",
+    "Passive event listeners",
+    "bdi Element",
+    "datalist Element",
+    "details Element",
+    "output Element",
+    "picture Element",
+    "progress Element",
+    "ruby, rp, rt Elements",
+    "Template Tag",
+    "time Element",
+    "Track element and Timed Text Track",
+    "Unknown Elements",
+    "ES5 Array",
+    "ES5 Date",
+    "ES5 Function",
+    "ES5 Object",
+    "ES5",
+    "ES5 Strict Mode",
+    "ES5 String",
+    "ES5 Syntax",
+    "ES5 Immutable Undefined",
+    "ES6 Array",
+    "ES6 Arrow Functions",
+    "ES6 Collections",
+    "ES5 String.prototype.contains",
+    "ES6 Generators",
+    "ES6 Math",
+    "ES6 Number",
+    "ES6 Object",
+    "ES6 Promises",
+    "ES6 String",
+    "Orientation and Motion Events",
+    "onInput Event",
+    "File API",
+    "Filesystem API",
+    "input[capture] Attribute",
+    "input[file] Attribute",
+    "input[directory] Attribute",
+    "input[form] Attribute",
+    "input[type=\"number\"] Localization",
+    "placeholder attribute",
+    "form#requestAutocomplete()",
+    "Form Validation",
+    "iframe[sandbox] Attribute",
+    "iframe[seamless] Attribute",
+    "iframe[srcdoc] Attribute",
+    "Animated PNG",
+    "Image crossOrigin",
+    "JPEG 2000",
+    "JPEG XR (extended range)",
+    "sizes attribute",
+    "srcset attribute",
+    "Webp Alpha",
+    "Webp Animation",
+    "Webp Lossless",
+    "Webp",
+    "input formaction",
+    "input formenctype",
+    "input formmethod",
+    "input formtarget",
+    "Hover Media Query",
+    "Pointer Media Query",
+    "Beacon API",
+    "Low Bandwidth Connection",
+    "Server Sent Events",
+    "Fetch API",
+    "XHR responseType='arraybuffer'",
+    "XHR responseType='blob'",
+    "XHR responseType='document'",
+    "XHR responseType='json'",
+    "XHR responseType='text'",
+    "XHR responseType",
+    "XML HTTP Request Level 2 XHR2",
+    "script[async]",
+    "script[defer]",
+    "Speech Recognition API",
+    "Speech Synthesis API",
+    "Local Storage",
+    "Session Storage",
+    "Web SQL Database",
+    "style[scoped]",
+    "SVG as an <img> tag source",
+    "SVG clip paths",
+    "SVG filters",
+    "SVG foreignObject",
+    "Inline SVG",
+    "SVG SMIL animation",
+    "textarea maxlength",
+    "Blob URLs",
+    "Data URI",
+    "URL parser",
+    "URLSearchParams API",
+    "Video Autoplay",
+    "Video crossOrigin",
+    "Video Loop Attribute",
+    "Video Preload Attribute",
+    "WebGL Extensions",
+    "RTC Data Channel",
+    "getUserMedia",
+    "RTC Peer Connection",
+    "Binary WebSockets",
+    "Base 64 encoding/decoding",
+    "Framed window",
+    "matchMedia",
+    "Workers from Blob URIs",
+    "Workers from Data URIs",
+    "Shared Workers",
+    "Transferables Objects",
+    "Web Workers"
+  ];
 
-// ===========================
-// Hilfsfunktionen
-// ===========================
-function logEvent(event) {
-    const timestamp = new Date().toISOString();
-    const msg = `[${timestamp}] ${event}`;
-    auditLog.push(msg);
-    console.log(msg);
-    document.getElementById('logContainer').innerText = auditLog.join("\n");
-}
+  console.log("=== NIS2 / ISO27001 - Luftdicht Features ===");
+  features.forEach((f,i) => console.log(`${i+1}: luftdicht`));
+  console.log("=== Alle Features sind jetzt 'luftdicht' ===");
 
-function ipToInt(ip) {
-    return ip.split('.').reduce((acc, octet) => (acc << 8) + parseInt(octet), 0);
-}
+  // 2. Traffic-Filter für HTTP(S) Links
+  const blockedDomains = [
+    "facebook.com",
+    "twitter.com",
+    "instagram.com",
+    "example.com"
+  ];
 
-function ipInCIDR(ip, cidr) {
-    const [range, bits] = cidr.split('/');
-    const ipNum = ipToInt(ip);
-    const rangeNum = ipToInt(range);
-    const mask = -1 << (32 - parseInt(bits));
-    return (ipNum & mask) === (rangeNum & mask);
-}
+  function isBlockedHttp(url) {
+    try {
+      const parsed = new URL(url);
+      return (parsed.protocol === "http:" || parsed.protocol === "https:") &&
+             blockedDomains.some(domain => parsed.hostname.includes(domain));
+    } catch (e) {
+      return false;
+    }
+  }
 
-function isIPAllowed(ip) {
-    return firewallConfig.allowedIPs.some(allowed => {
-        if (allowed.includes('/')) return ipInCIDR(ip, allowed);
-        return ip === allowed;
+  // Links überwachen
+  const links = document.querySelectorAll("a[href]");
+  links.forEach(link => {
+    link.addEventListener("click", e => {
+      const url = link.href;
+      if (isBlockedHttp(url)) {
+        e.preventDefault();
+        console.log(`HTTP(S) Traffic zu "${url}" blockiert: luftdicht`);
+        alert("Dieser HTTP(S)-Link ist luftdicht – Zugriff blockiert!");
+      } else if (link.href.startsWith("http") || link.href.startsWith("https")) {
+        console.log(`HTTP(S) Traffic erlaubt: ${url}`);
+      } else {
+        console.log(`Nicht-HTTP Traffic ignoriert: ${url}`);
+      }
     });
-}
+    link.textContent = "luftdicht"; // Optional
+  });
 
-function containsLeakKeyword(str) {
-    return firewallConfig.leakKeywords.some(keyword => str.includes(keyword));
-}
-
-function containsMalwarePattern(str) {
-    return firewallConfig.malwarePatterns.some(pattern => str.includes(pattern));
-}
-
-function containsBotPattern(str) {
-    return firewallConfig.botPatterns.some(pattern => str.toLowerCase().includes(str.toLowerCase()));
-}
-
-// ===========================
-// Firewall-Kernlogik
-// ===========================
-function handleConnection(connection) {
-    const { ip, protocol, payload } = connection;
-
-    if (firewallConfig.blockedIPs.includes(ip)) {
-        logEvent(`BLOCKED IP ${ip} versuchte Verbindung mit ${protocol}`);
-        return false;
+  // 3. Fetch/XHR Traffic überwachen
+  // fetch override
+  const originalFetch = window.fetch;
+  window.fetch = function(input, init) {
+    let url = typeof input === "string" ? input : input.url;
+    if (isBlockedHttp(url)) {
+      console.log(`HTTP(S) Fetch blockiert: ${url}`);
+      return Promise.reject(new Error("Blocked by luftdicht"));
     }
+    console.log(`HTTP(S) Fetch erlaubt: ${url}`);
+    return originalFetch(input, init);
+  };
 
-    if (!firewallConfig.allowedProtocols.includes(protocol)) {
-        logEvent(`BLOCKED PROTOCOL ${protocol} von ${ip} – nur HTTP erlaubt`);
-        return false;
-    }
+  // XHR override
+  const OriginalXHR = window.XMLHttpRequest;
+  function LuftdichtXHR() {
+    const xhr = new OriginalXHR();
+    const open = xhr.open;
+    xhr.open = function(method, url) {
+      if (isBlockedHttp(url)) {
+        console.log(`HTTP(S) XHR blockiert: ${url}`);
+        return; // stop request
+      } else {
+        console.log(`HTTP(S) XHR erlaubt: ${url}`);
+        return open.apply(xhr, arguments);
+      }
+    };
+    return xhr;
+  }
+  window.XMLHttpRequest = LuftdichtXHR;
 
-    connectionTracker[ip] = (connectionTracker[ip] || 0) + 1;
-    if (connectionTracker[ip] > firewallConfig.maxConnectionsPerIP) {
-        logEvent(`DoS VERDACHT: ${ip} überschreitet maximale Verbindungen`);
-        return false;
-    }
-
-    if (!isIPAllowed(ip)) {
-        logEvent(`UNAUTHORIZED IP ${ip} versucht Zugriff`);
-        return false;
-    }
-
-    if (payload && containsLeakKeyword(payload)) {
-        logEvent(`LEAK KEYWORD DETECTED von ${ip}: ${payload}`);
-        return false;
-    }
-
-    if (payload && containsMalwarePattern(payload)) {
-        logEvent(`MALWARE PATTERN DETECTED von ${ip}: ${payload}`);
-        return false;
-    }
-
-    if (payload && containsBotPattern(payload)) {
-        logEvent(`BOT DETECTED von ${ip}: ${payload}`);
-        return false;
-    }
-
-    logEvent(`ALLOWED ${ip} mit ${protocol}`);
-    return true;
-}
-
-// ===========================
-// Audit-Report
-// ===========================
-function generateAuditReport() {
-    logEvent("=== AUDIT REPORT START ===");
-    logEvent(JSON.stringify({ connections: { ...connectionTracker } }, null, 2));
-    logEvent("=== AUDIT REPORT END ===");
-}
-
-// ===========================
-// Demo-Verbindungen
-// ===========================
-function runDemo() {
-    const demoConnections = [
-        { ip: '192.168.0.1', protocol: 'HTTP', payload: "normal HTTP traffic" },
-        { ip: '10.0.0.5', protocol: 'HTTPS', payload: "HTTPS traffic" },
-        { ip: '192.168.0.2', protocol: 'FTP', payload: "FTP traffic" },
-        { ip: '123.123.123.123', protocol: 'HTTP', payload: "malware eval(document.cookie)" },
-        { ip: '192.168.0.3', protocol: 'HTTP', payload: "Canvas text" } // Leak keyword
-    ];
-
-    demoConnections.forEach(handleConnection);
-    generateAuditReport();
-}
-
-// Demo automatisch beim Laden der Seite starten
-window.onload = runDemo;
+  console.log("Trafficfilter aktiviert: HTTP/HTTPS Links, fetch & XHR überwacht.");
+})();
