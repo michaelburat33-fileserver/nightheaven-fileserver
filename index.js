@@ -1,3 +1,13 @@
+const root= document.getElementById('root');
+root.innerHTML=`<div class="top" id="social">
+</div>
+<div class="wrapper">
+
+<div class="newstouer">
+<div id="news"></div>
+<div id="placeholder"></div>
+<div id="tour"></div>`;
+
 const API_KEY = "DEIN_SECRET_API_KEY";
 
     async function loadData() {
