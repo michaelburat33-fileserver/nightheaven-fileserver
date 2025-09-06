@@ -8,7 +8,7 @@ root.innerHTML = `
       <div id="tour"></div>
     </div>
     <div class="headline"><h1>Mitglieder</h1></div>
-    <div class="members" id="members"></h1>
+    <div class="members" id="members"></div>
   </div>
 `;
 
