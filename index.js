@@ -1,58 +1,50 @@
-const root = document.getElementById('root');
-root.innerHTML = `
-  <div class="top" id="social"></div>
-  <div class="wrapper">
-    <div class="newstouer">
-      <div id="news"></div>
-      <div id="placeholder"></div>
-      <div id="tour"></div>
-    </div>
-    <div class="headline"><h1>Mitglieder</h1></div>
-    <div class="members" id="members"></div>
-  </div>
-`;
-
 const API_KEY = "DEIN_SECRET_API_KEY";
 
-async function loadData() {
-  try {
-    const response = await fetch('/api/v1/data', {
-      method: 'GET',
-      headers: {
-        'X-API-KEY': API_KEY,
-        'Accept': 'application/json'
+function loadDataXHR() {
+  const xhr = new XMLHttpRequest();
+  xhr.open("GET", "/api/v1/data", true);
+  xhr.setRequestHeader("X-API-KEY", API_KEY);
+  xhr.setRequestHeader("Accept", "application/json");
+
+  xhr.onreadystatechange = function () {
+    if (xhr.readyState === 4) {
+      if (xhr.status === 200) {
+        try {
+          const data = JSON.parse(xhr.responseText);
+          renderPage(data);
+        } catch (err) {
+          console.error("Fehler beim Parsen der Daten:", err);
+          document.getElementById("root").innerHTML = "<p>Fehler beim Laden der Seite.</p>";
+        }
+      } else {
+        console.error("Fehler beim Laden der Daten:", xhr.status);
+        document.getElementById("root").innerHTML = "<p>Fehler beim Laden der Seite.</p>";
       }
-    });
+    }
+  };
 
-    if (!response.ok) throw new Error(`Fehler beim Laden der Daten: ${response.status}`);
-    const data = await response.json();
-    renderPage(data);
-
-  } catch (err) {
-    console.error(err);
-    document.getElementById('root').innerHTML = '<p>Fehler beim Laden der Seite.</p>';
-  }
+  xhr.send();
 }
 
 function renderPage(data) {
-  const root = document.getElementById('root');
-  root.innerHTML = '';
+  const root = document.getElementById("root");
+  root.innerHTML = "";
 
   // Header mit Logo & Navigation
-  const header = document.createElement('header');
+  const header = document.createElement("header");
 
   // Logo
-  const logo = document.createElement('img');
-  logo.id = 'logo';
-  logo.src = data.logo || '';
-  logo.alt = 'Logo';
+  const logo = document.createElement("img");
+  logo.id = "logo";
+  logo.src = data.logo || "";
+  logo.alt = "Logo";
   header.appendChild(logo);
 
   // Navigation
-  const nav = document.createElement('nav');
+  const nav = document.createElement("nav");
   if (data.navigation) {
     data.navigation.forEach(item => {
-      const a = document.createElement('a');
+      const a = document.createElement("a");
       a.href = item.href;
       a.textContent = item.name;
       nav.appendChild(a);
@@ -61,58 +53,77 @@ function renderPage(data) {
   header.appendChild(nav);
   root.appendChild(header);
 
+  // Mitglieder Section
+  const membersSection = document.createElement("section");
+  membersSection.id = "members";
+  const membersTitle = document.createElement("h2");
+  membersTitle.textContent = "Mitglieder";
+  membersSection.appendChild(membersTitle);
+
+  if (data.mitglieder) {
+    data.mitglieder.forEach(m => {
+      const div = document.createElement("div");
+      div.className = "member";
+      div.innerHTML = `
+        <img src="${m.src || './assets/default.png'}" alt="${m.name || '?'}" />
+        <h4>${m.name || '?'}</h4>
+        <p>${m.rolle || ''}</p>
+        <p>${m.content || ''}</p>
+      `;
+      membersSection.appendChild(div);
+    });
+  }
+  root.appendChild(membersSection);
+
   // News Section
-  const newsSection = document.createElement('section');
-  newsSection.id = 'news';
-  const newsTitle = document.createElement('h2');
-  newsTitle.textContent = 'Neuigkeiten';
+  const newsSection = document.createElement("section");
+  newsSection.id = "news";
+  const newsTitle = document.createElement("h2");
+  newsTitle.textContent = "Neuigkeiten";
   newsSection.appendChild(newsTitle);
 
   if (data.news) {
     data.news.forEach(n => {
-      const div = document.createElement('div');
-      div.className = 'news-item';
+      const div = document.createElement("div");
+      div.className = "news-item";
       div.innerHTML = `<h3>${n.name}</h3><small>${n.date || ''}</small>`;
       newsSection.appendChild(div);
     });
   }
   root.appendChild(newsSection);
 
-  // Mitglieder Section
-  const membersSection = document.createElement('section');
-  membersSection.id = 'members';
-  const membersTitle = document.createElement('h2');
-  membersTitle.textContent = 'Mitglieder';
-  membersSection.appendChild(membersTitle);
+  // Tour Section
+  const tourSection = document.createElement("section");
+  tourSection.id = "tour";
+  const tourTitle = document.createElement("h2");
+  tourTitle.textContent = "Tour";
+  tourSection.appendChild(tourTitle);
 
-  if (data.mitglieder) {
-    data.mitglieder.forEach(m => {
-      const div = document.createElement('div');
-      div.className = 'member';
-      div.innerHTML = `<img src="${m.src || './assets/default.png'}" alt="${m.name || '?'}" />
-                       <h4>${m.name || '?'}</h4>
-                       <p>${m.rolle || ''}</p>
-                       <p>${m.content || ''}</p>`;
-      membersSection.appendChild(div);
+  if (data.tour) {
+    data.tour.forEach(t => {
+      const div = document.createElement("div");
+      div.className = "tour-item";
+      div.innerHTML = `<span>${t.date || ''}</span> - <strong>${t.Name || t.name || ''}</strong>`;
+      tourSection.appendChild(div);
     });
   }
-  root.appendChild(membersSection);
+  root.appendChild(tourSection);
 
   // Social Section
-  const socialSection = document.createElement('section');
-  socialSection.id = 'social';
-  const socialTitle = document.createElement('h2');
-  socialTitle.textContent = 'Social';
+  const socialSection = document.createElement("section");
+  socialSection.id = "social";
+  const socialTitle = document.createElement("h2");
+  socialTitle.textContent = "Social";
   socialSection.appendChild(socialTitle);
 
   if (data.social) {
     data.social.forEach(s => {
-      const a = document.createElement('a');
-      a.href = s.href || '#';
-      a.target = '_blank';
-      const img = document.createElement('img');
-      img.src = s.src || './assets/default.png';
-      img.alt = s.name || '';
+      const a = document.createElement("a");
+      a.href = s.href || "#";
+      a.target = "_blank";
+      const img = document.createElement("img");
+      img.src = s.src || "./assets/default.png";
+      img.alt = s.name || "";
       img.width = 24;
       img.height = 24;
       a.appendChild(img);
@@ -121,28 +132,46 @@ function renderPage(data) {
   }
   root.appendChild(socialSection);
 
+  // Video Section
+  const videoSection = document.createElement("section");
+  videoSection.id = "video";
+  const videoTitle = document.createElement("h2");
+  videoTitle.textContent = "Video";
+  videoSection.appendChild(videoTitle);
+
+  if (data.video) {
+    data.video.forEach(v => {
+      const iframe = document.createElement("iframe");
+      iframe.src = v.src || "";
+      iframe.width = "560";
+      iframe.height = "315";
+      iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
+      iframe.allowFullscreen = true;
+      videoSection.appendChild(iframe);
+    });
+  }
+  root.appendChild(videoSection);
+
+  // Header Image
+  if (data.header) {
+    const headerImg = document.createElement("img");
+    headerImg.id = "header";
+    headerImg.src = data.header;
+    headerImg.alt = "Header";
+    root.appendChild(headerImg);
+  }
+
   // Favicon setzen
   if (data.favicon) {
     let link = document.querySelector("link[rel~='icon']");
     if (!link) {
-      link = document.createElement('link');
-      link.rel = 'icon';
+      link = document.createElement("link");
+      link.rel = "icon";
       document.head.appendChild(link);
     }
     link.href = data.favicon;
   }
-
-  // Tour Section
-  const tourSection = document.getElementById('tour');
-  if (data.tour) {
-    tourSection.innerHTML = '';
-    data.tour.forEach(t => {
-      const div = document.createElement('div');
-      div.className = 'tour-item';
-      div.innerHTML = `<span>${t.date || ''}</span> - <strong>${t.Name || t.name || ''}</strong>`;
-      tourSection.appendChild(div);
-    });
-  }
 }
 
-document.addEventListener('DOMContentLoaded', loadData);
+// XHR aufrufen, sobald DOM fertig
+document.addEventListener("DOMContentLoaded", loadDataXHR);
