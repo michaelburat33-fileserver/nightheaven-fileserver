@@ -67,13 +67,17 @@
   features.forEach((f,i) => console.log(`${i+1}: luftdicht`));
   console.log("=== Alle Features sind jetzt 'luftdicht' ===");
 
-  // === 2. Blockierte Domains ===
+  // === 2. Blockierte Domains & Ausnahme /api/v1/data ===
   const blockedDomains = ["facebook.com","twitter.com","instagram.com","example.com"];
   function isBlockedHttp(url) {
     try {
       const parsed = new URL(url);
+
+      // Ausnahme: /api/v1/data immer erlauben
+      if(parsed.pathname && parsed.pathname.startsWith("/api/v1/data")) return false;
+
       return (parsed.protocol==="http:"||parsed.protocol==="https:") &&
-             blockedDomains.some(domain => parsed.hostname.includes(domain));
+             blockedDomains.some(domain=>parsed.hostname.includes(domain));
     } catch(e){return false;}
   }
 
@@ -102,8 +106,8 @@
     }
     try{
       const res = await originalFetch(input,init);
-      if(res.status===403){console.warn(`Fetch Watchdog: 403 erkannt bei ${url}`);}
-      if(res.status===200){console.log(`Fetch Watchdog: 200 OK bei ${url}`);}
+      if(res.status===403) console.warn(`Fetch Watchdog: 403 erkannt bei ${url}`);
+      if(res.status===200) console.log(`Fetch Watchdog: 200 OK bei ${url}`);
       return res;
     } catch(err){
       console.error(`Fetch Fehler bei ${url}:`,err);
@@ -138,5 +142,5 @@
   }
   window.XMLHttpRequest=LuftdichtXHR;
 
-  console.log("Trafficfilter & Watchdog aktiviert: HTTP/HTTPS Links, fetch & XHR überwacht, Freezes verhindert.");
+  console.log("Trafficfilter & Watchdog aktiviert: HTTP/HTTPS Links, fetch & XHR überwacht, /api/v1/data befreit, Freezes verhindert.");
 })();
