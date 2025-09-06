@@ -1,1 +1,69 @@
-d
+{
+  "logo": "./assets/logo.png",
+  "navigation":[
+    {"name":"Neuigkeiten",
+    "href": "#/news"},
+    {"name":"Auftritte",
+    "href": "#/tour"},
+    {"name": "Mitglieder",
+    "href": "#/members"},
+    {"name": "Alben",
+    "href": "#/alben"},
+    {"name": "Kontakt",
+    "href":"#/contact"}
+  ],
+  "mitglieder": [
+    {
+      "content": "Ich wurd im Januar 1992 Geboren worden es war eine stürmische Nacht ",
+      "href": "#mitglieder/#/Michael",
+      "name": "Michael",
+      "rolle": "Keyborder",
+      "src": "./assets/Michael.png"
+    },
+    {
+      "href": "#/members#/kathy",
+      "name": "Kathy",
+      "rolle": "Gesang",
+      "src": "./assets/default.png"
+    },
+    {
+      "name": "?",
+      "rolle": "Schlagzeuger",
+      "src": "./assets/default.png"
+    }
+  ],
+  "news": [
+    {
+      "href": "#/news#/wir suchen einen Gitarristen",
+      "name": "Wir suchen einen Gitarristen",
+      "date": "01. Okt 2025"
+    },
+    {
+      "name": "Unsere neue Webseite ist online",
+      "date": "02. Okt 2025",
+      "href": "#/news#/unsere neue Webseite ist Online"
+    },
+    {
+      "name": "Wir suchen einen Schlagzeuger",
+      "date": "15. Mai 2025",
+      "href": "#/news#/wir suchen einen Schlagzeuger"
+    },
+    {
+      "name": "Wir suchen einen Bassisten",
+      "date": "30. Mai 2025",
+      "href": "#/news#/wir suchen einen "
+    }
+  ],
+  "tour":[
+    {"Name": "Es sind keine Auftritte verfügbar",
+    "date":"01. Mai 2025"}
+  ],
+  "social":[
+    { "src":"./assets/instagram.png",
+      "href":"https://instagram.com/"}
+  ],
+  "video":[
+    {"src": "https://youtu.be/N4Vfy5yCy-c?si=p0GrAp5G5apMXzYM"}
+  ],
+  "header": "./assets/il_fullxfull.4894494064_i9hx.png"
+}
