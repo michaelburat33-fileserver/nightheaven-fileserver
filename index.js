@@ -2,7 +2,7 @@ const API_KEY = "DEIN_SECRET_API_KEY";
 
 function loadDataXHR() {
   const xhr = new XMLHttpRequest();
-  xhr.open("GET", "/api/v1/data", true);
+  xhr.open("GET", "http://127.0.0.1:3000/api/v1/data", true);
   xhr.setRequestHeader("X-API-KEY", API_KEY);
   xhr.setRequestHeader("Accept", "application/json");
 
